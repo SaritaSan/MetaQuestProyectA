@@ -15,6 +15,13 @@ public class InstantiateObject : MonoBehaviour
         obj.SetActive(true);
     }
 
+    public void Instantiate(Vector3 position)
+    {
+        GameObject obj = GetObject();
+        obj.transform.position = position;
+        obj.SetActive(true);
+    }
+
     private GameObject GetObject()
     {
         GameObject obj = null;

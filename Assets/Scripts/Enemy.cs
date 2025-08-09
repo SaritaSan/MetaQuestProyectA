@@ -5,7 +5,17 @@ using System.Collections;
 public class Enemy : MonoBehaviour
 {
     [SerializeField]
-    private EnemyData _enemyData;
+    private string _target;
+    [SerializeField]
+    private float _runSpeed = 2f;
+    [SerializeField]
+    private string _runAnimationName;
+    [SerializeField]
+    private string _hitAnimationName;
+    [SerializeField]
+    private string _dieSoundName;
+    [SerializeField]
+    private string _dieAnimationName;
     [SerializeField]
     private Animator _animator;
     [SerializeField]
@@ -13,6 +23,7 @@ public class Enemy : MonoBehaviour
     private bool _isRunning;
     private Vector3 _targetPosition;
     private Health _targetHealth;
+    private Coroutine _damageCoroutine;
     private void OnEnable()
     {
         _isRunning = false;
@@ -21,7 +32,7 @@ public class Enemy : MonoBehaviour
     }
     private void GetTarget()
     {
-        GameObject target = GameObject.FindGameObjectWithTag(_enemyData.primaryTargetTag);
+        GameObject target = GameObject.FindGameObjectWithTag(_target);
         if (target != null && !_isRunning)
         {
             Vector3 targetPosition = new Vector3(target.transform.position.x,
@@ -29,7 +40,7 @@ public class Enemy : MonoBehaviour
             _targetPosition = targetPosition;
             _targetHealth = target.GetComponent<Health>();
             _isRunning = true;
-            _animator.Play(_enemyData.runAnimationName);
+            _animator.Play(_runAnimationName);
         }
     }
     private void Update()
@@ -37,33 +48,26 @@ public class Enemy : MonoBehaviour
         if (_isRunning)
         {
             transform.position = Vector3.MoveTowards(transform.position, _targetPosition,
-                _enemyData.runSpeed * Time.deltaTime);
+                _runSpeed* Time.deltaTime);
             transform.LookAt(_targetPosition);
-            if (Vector3.Distance(transform.position, _targetPosition) <= _enemyData.attackRange)
-            {
-                _isRunning = false;
-                StartCoroutine(Attack());
-            }
         }
     }
-    private IEnumerator Attack()
+    public void TakeDamage()
     {
-        while (_targetHealth != null && _targetHealth.CurrentHealth > 0)
+        if (_damageCoroutine != null)
         {
-            _animator.Play(_enemyData.attackAnimationName, 0, 0f);
-            SoundManager.instance.Play(_enemyData.attackSoundName);
-            yield return new WaitForSeconds(_enemyData.attackDuration);
-            if (_targetHealth != null)
-            {
-                _targetHealth.TakeDamage(_enemyData.attackDamage);
-            }
-            yield return new WaitForSeconds(_enemyData.attackCooldown);
+            return;
         }
-        Win();
+        _damageCoroutine = StartCoroutine(TakeDamageCoroutine());
     }
-    private void Win()
+    private IEnumerator TakeDamageCoroutine()
     {
-        _animator.Play(_enemyData.winAnimationName);
+        _isRunning = false;
+        _animator.Play(_hitAnimationName);
+        yield return new WaitForSeconds(0.5f);
+        _animator.Play(_runAnimationName);
+        _isRunning = true;
+        _damageCoroutine = null;
     }
     public void Die()
     {
@@ -73,8 +77,8 @@ public class Enemy : MonoBehaviour
     }
     private IEnumerator DieCoroutine()
     {
-        SoundManager.instance.Play(_enemyData.dieSoundName);
-        _animator.Play(_enemyData.dieAnimationName);
+        SoundManager.instance.Play(_dieSoundName);
+        _animator.Play(_dieAnimationName);
         yield return new WaitForSeconds(2f);
         gameObject.SetActive(false);
     }

@@ -12,6 +12,10 @@ public class EnemySpawner : MonoBehaviour
     private float _positionY = 0f;
     [SerializeField]
     private UnityEvent<Vector3> _instantiateZombie;
+    private void Start()
+    {
+        Initialize();
+    }
     public void Initialize()
     {
         StartCoroutine(SpawnEnemies());
